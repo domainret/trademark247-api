@@ -1,9 +1,11 @@
 # Trademark247 API
 
-**Fast, no-friction access to US trademark + UDRP/WIPO domain-dispute data — built to be integrated by scripts, bots, and AI tools in minutes.**
+**Fast, no-friction access to US trademark + UDRP/WIPO domain-dispute data — built to be integrated by scripts, bots, and AI agents in minutes.**
 
-Point your tool of choice at a single JSON endpoint and pull trademark and domain-dispute
-records straight into your own dataset. No SDK, no OAuth, no scraping, no HTML to parse.
+Tell your favorite AI agent (e.g. Claude or ChatGPT) to visit this URL and learn how to integrate
+the API into your workflow. All the data is available through a single JSON endpoint — pull
+trademark and domain-dispute records straight into your own dataset. No SDK, no OAuth, no scraping,
+no HTML to parse.
 
 ---
 
@@ -15,7 +17,7 @@ records straight into your own dataset. No SDK, no OAuth, no scraping, no HTML t
   only usage data we keep is an aggregate hit count per API key (for fair-use limits) — never your
   query, never who you are. Your searches are yours.
 - **🤖 Built for automation & AI.** Clean, predictable JSON over HTTPS with a single header for
-  auth. Drop it into a script, an agent, a data pipeline, or whatever AI tool you're using — it
+  auth. Drop it into a script, a data pipeline, or whatever AI agent you're using — it
   just works. (These docs live on GitHub on purpose: openly readable by bots and humans alike, with
   nothing gating access.)
 - **⚡ Fast.** Trigram-indexed Postgres; typical responses in tens of milliseconds.
