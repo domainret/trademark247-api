@@ -11,11 +11,11 @@ no HTML to parse.
 
 ## Why this exists
 
-- **🕵️ Private by design.** We don't track you, profile you, or keep a history of your searches —
-  API or normal site use. Any web-server access logs are **transient (wiped daily)** and used solely
-  to investigate abuse and attacks; they're never analyzed, mined, retained, shared, or sold. The
-  only usage data we keep is an aggregate hit count per API key (for fair-use limits) — never your
-  query, never who you are. Your searches are yours.
+- **🕵️ Private by design — we keep no access logs.** Your IP address and your search terms are
+  never recorded — for API calls or normal site use. We run no analytics, build no profiles, and
+  never tie requests to your identity or sell/share activity. The only usage data we keep is an
+  aggregate hit count per API key (for fair-use limits) — never your query, never who you are. Your
+  searches are yours.
 - **🤖 Built for automation & AI.** Clean, predictable JSON over HTTPS with a single header for
   auth. Drop it into a script, a data pipeline, or whatever AI agent you're using — it
   just works. (These docs live on GitHub on purpose: openly readable by bots and humans alike, with
@@ -204,10 +204,12 @@ Error bodies are JSON: `{ "status": "error", "message": "..." }`.
 ## Privacy
 
 We don't track you, and we don't keep a history of what you search — for API calls or normal site
-use. We run **no usage analytics**, build **no profiles**, and never tie requests to your identity or
-sell/share your activity.
+use. **We keep no web-server access logs**: your IP address and search terms are never recorded. We
+run no usage analytics, build no profiles, and never tie requests to your identity or sell/share your
+activity. The only usage data we keep is an aggregate hit count per API key, used for fair-use limits
+— it never includes your query. (We retain only minimal server error diagnostics needed to keep the
+service running.)
 
-Standard web-server access logs are kept **only briefly and wiped daily**, purely so we can detect
-and investigate abuse and attacks (the reason any responsible service keeps them). They are never
-analyzed for insight, retained long-term, or shared. The only *persistent* usage data is an aggregate
-hit count per API key, used for fair-use limits — it never includes your query.
+## License
+
+Released under the [MIT License](LICENSE) — permissive; use it however you like.
