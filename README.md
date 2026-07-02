@@ -11,17 +11,17 @@ no HTML to parse.
 
 ## Why this exists
 
-- **🕵️ Private by design — we keep no access logs.** Your IP address and your search terms are
+- **Private by design — we keep no access logs.** Your IP address and your search terms are
   never recorded — for API calls or normal site use. We run no analytics, build no profiles, and
   never tie requests to your identity or sell/share activity. The only usage data we keep is an
   aggregate hit count per API key (for fair-use limits) — never your query, never who you are. Your
   searches are yours.
-- **🤖 Built for automation & AI.** Clean, predictable JSON over HTTPS with a single header for
+- **Built for automation & AI.** Clean, predictable JSON over HTTPS with a single header for
   auth. Drop it into a script, a data pipeline, or whatever AI agent you're using — it
   just works. (These docs live on GitHub on purpose: openly readable by bots and humans alike, with
   nothing gating access.)
-- **⚡ Fast.** Trigram-indexed Postgres; typical responses in tens of milliseconds.
-- **🔎 Two datasets, one call.** Search **trademarks** and **UDRP/WIPO domain decisions** together,
+- **Fast.** Typically responds in tens of milliseconds.
+- **Two datasets, one call.** Search **trademarks** and **UDRP/WIPO domain decisions** together,
   or either one on its own.
 
 > **Roadmap:** In addition to this search/detail API, you'll soon be able to **download the entire
