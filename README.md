@@ -14,8 +14,8 @@ no HTML to parse.
 - **Private by design — we keep no access logs.** Your IP address and your search terms are
   never recorded — for API calls or normal site use. We run no analytics, build no profiles, and
   never tie requests to your identity or sell/share activity. The only usage data we keep is an
-  aggregate hit count per API key (for fair-use limits) — never your query, never who you are. Your
-  searches are yours.
+  aggregate hit count per API key per day (for fair-use limits) — never your query, never who you
+  are. Your searches are yours.
 - **Built for automation & AI.** Clean, predictable JSON over HTTPS with a single header for
   auth. Drop it into a script, a data pipeline, or whatever AI agent you're using — it
   just works. (These docs live on GitHub on purpose: openly readable by bots and humans alike, with
@@ -39,7 +39,8 @@ https://trademark247.com
 ## Get an API key
 
 Keys are fixed strings issued to you. **To request one, email `api@trademark247.com`** (or open an
-issue on this repo). There's no signup form and no dashboard — you get a key, you use it.
+issue on this repo). There's no signup form and no dashboard — you get a key, you use it. Keep it
+secret: it is shown to you once and we only store a hash of it.
 
 ## Authentication
 
@@ -49,7 +50,30 @@ Send your key in a header on every request:
 X-API-Key: <your key>
 ```
 
-Requests without a valid key return `401`.
+Requests without a valid key return `401`. A key that has been disabled or revoked returns `403`.
+
+## Rate limits
+
+Every key has two limits, both per key (not per IP):
+
+| Limit | Default | Window |
+|-------|---------|--------|
+| Burst | 60 requests | per minute (fixed 60-second windows) |
+| Quota | 5,000 requests | per day (UTC) |
+
+Every response carries the current state:
+
+```
+X-RateLimit-Limit: 60              # burst limit
+X-RateLimit-Remaining: 57          # left in the current minute
+X-RateLimit-Reset: 1794973200      # unix time the minute window resets
+X-RateLimit-Daily-Limit: 5000
+X-RateLimit-Daily-Remaining: 4871
+```
+
+Over a limit you get `429` with a `Retry-After` header (seconds) and a JSON body that says which
+limit you hit. Back off until `Retry-After` has passed — a `429` still counts against nothing except
+your 429 tally. Need more? Email `api@trademark247.com`; limits are set per key.
 
 ---
 
@@ -60,10 +84,13 @@ Requests without a valid key return `401`.
 | Param  | Required | Values                          | Notes |
 |--------|----------|---------------------------------|-------|
 | `type` | yes      | `all` · `trademark` · `udrp`    | Which dataset(s) to search. |
-| `q`    | yes      | any string                      | Your search term. Cleaned automatically the same way the site search box does (trademarks: space-insensitive; domains: reduced to `a–z0–9`). |
+| `q`    | yes      | any string                      | Your search term. Cleaned automatically the same way the site search box does (trademarks: space-insensitive; domains: reduced to `a–z0–9`). At least 3 letters or digits. |
 | `live` | no       | `1`                             | Trademarks only — return just **live** marks (excludes dead/abandoned/expired). Ignored for UDRP. |
+| `limit` | no      | `1`–`1000`                      | Rows to return per dataset. Default `1000`. Out-of-range values are clamped. |
 
-Returns the total match **count** for each dataset plus the **first 25 results**.
+Returns the total match **count** for each dataset plus up to **1,000 results** (the first ones in
+relevance order — exact matches first, live marks before dead ones). There is no paging: if you need a
+different slice, refine `q`; `limit` is there for clients that want a smaller payload.
 
 - `type=all` → `trademark_count` + `trademark_results` **and** `udrp_count` + `udrp_results`
 - `type=trademark` → `trademark_count` + `trademark_results`
@@ -100,6 +127,8 @@ r = requests.get(
     headers={"X-API-Key": "YOUR_KEY"},
     params={"type": "all", "q": "nike"},
 )
+if r.status_code == 429:
+    print("rate limited, retry in", r.headers.get("Retry-After"), "s")
 data = r.json()
 print(data["trademark_count"], data["udrp_count"])
 ```
@@ -124,6 +153,7 @@ const data = await r.json();
   "type": "all",
   "query": "nike",
   "live": false,
+  "limit": 1000,
   "trademark_count": 554,
   "trademark_results": [
     {
@@ -131,6 +161,7 @@ const data = await r.json();
       "mark": "NIKE",
       "owner_name": "NIKE, INC.",
       "status_name": "Published for Opposition",
+      "status_label": "Published for Opposition",
       "is_alive": true,
       "file_date": "2026-01-21",
       "gs_description": "Jewelry",
@@ -162,7 +193,8 @@ const data = await r.json();
 | `serial` | USPTO serial number |
 | `mark` | Mark text |
 | `owner_name` | Current owner |
-| `status_name` | USPTO status (e.g. *Registered*, *Abandoned*) |
+| `status_name` | Full USPTO status wording (e.g. *Registered*, *Abandoned - No Statement Of Use Filed*) |
+| `status_label` | Short normalized status (e.g. *Registered*, *Abandoned*, *Office Action*); `null` for rare wordings |
 | `is_alive` | `true` if the mark is live |
 | `file_date` | Filing date (`YYYY-MM-DD`) |
 | `gs_description` | Goods & services (truncated) |
@@ -190,9 +222,13 @@ const data = await r.json();
 | `200` | OK |
 | `400` | Missing `q` or invalid `type` |
 | `401` | Missing or invalid API key |
+| `403` | API key disabled or revoked |
+| `422` | Term matches too much to answer in time — use a more specific term |
+| `429` | Rate limit or daily quota exceeded — see `Retry-After` |
 | `500` | Server error |
+| `503` | Temporarily unavailable — retry shortly |
 
-Error bodies are JSON: `{ "status": "error", "message": "..." }`.
+Error bodies are JSON: `{ "status": "error", "message": "..." }` (a `429` also includes `"retry_after"` in seconds).
 
 ---
 
@@ -206,9 +242,9 @@ Error bodies are JSON: `{ "status": "error", "message": "..." }`.
 We don't track you, and we don't keep a history of what you search — for API calls or normal site
 use. **We keep no web-server access logs**: your IP address and search terms are never recorded. We
 run no usage analytics, build no profiles, and never tie requests to your identity or sell/share your
-activity. The only usage data we keep is an aggregate hit count per API key, used for fair-use limits
-— it never includes your query. (We retain only minimal server error diagnostics needed to keep the
-service running.)
+activity. The only usage data we keep is an aggregate count of requests per API key per UTC day
+(served / rate-limited / errored), used for fair-use limits — it never includes your query or your
+IP. (We retain only minimal server error diagnostics needed to keep the service running.)
 
 ## License
 
